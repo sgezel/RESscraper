@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import urllib3
 import re
 from geopy.geocoders import Nominatim
+import json
 
 http = urllib3.PoolManager()
 geolocator = Nominatim()
@@ -28,7 +29,7 @@ def getshops(soup):
         location = geolocator.geocode(details[1] + ", " + details[2] + ", " + province)
 
         shoplist.append({"name": shop_name, "steetnr": details[1], "zipcodecomm": details[2], "province": province, "lat": location.latitude, "long": location.longitude})
-        #print(shoplist[index])
+        
         index + 1
 
     index = 0
@@ -38,11 +39,13 @@ def getshops(soup):
         obj["category"] = desc.b.text
         index + 1
 
-    print shoplist
+    with open('data.json', 'w') as outfile:
+        json.dump(shoplist, outfile)
+
 def main():
     print("main")
 
-    soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=tienen&radius=5&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
+    soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=tienen&radius=50&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
                          , 'html.parser')
 
     getshops(soup)
