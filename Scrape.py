@@ -1,8 +1,10 @@
 from bs4 import BeautifulSoup
 import urllib3
 import re
+from geopy.geocoders import Nominatim
 
 http = urllib3.PoolManager()
+geolocator = Nominatim()
 
 def getpage(url):
     try:
@@ -14,20 +16,29 @@ def getpage(url):
 
 def getshops(soup):
 
+    shoplist = []
+    index = 0
     for shop in soup.find_all("td", {"valign":"top", "width":"30%"}):
         details = [x.strip() for x in str(shop.a.contents).split('<br>')]
         shop_name = details[0]
         shop_name = shop_name[details[0].index("\\r\\n\\r\\n\\t\\t\\t\\t\\t\\t\\t") + len("\\r\\n\\r\\n\\t\\t\\t\\t\\t\\t\\t"):-2]
-        print(shop_name) #naam
-        print(details[1]) #straat + nr
-        print(details[2]) #postcode + gemeente
-        print(details[3][:details[3].index("<br/>")]) #provincie
 
+        province = details[3][:details[3].index("<br/>")]
+
+        location = geolocator.geocode(details[1] + ", " + details[2] + ", " + province)
+
+        shoplist.append({"name": shop_name, "steetnr": details[1], "zipcodecomm": details[2], "province": province, "lat": location.latitude, "long": location.longitude})
+        #print(shoplist[index])
+        index + 1
+
+    index = 0
     for desc in soup.find_all("td", {"valign":"top", "class":"normal", "colspan":"5"}):
-        print(re.findall(r'\d+', desc.contents[0])[0]) #%res
-        print(desc.b.text) #categorie
-        print(re.findall(r'\d+', desc))
+        obj = shoplist[index]
+        obj["resp"] = re.findall(r'\d+', desc.contents[0])[0]
+        obj["category"] = desc.b.text
+        index + 1
 
+    print shoplist
 def main():
     print("main")
 
