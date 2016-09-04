@@ -1,11 +1,11 @@
 from bs4 import BeautifulSoup
 import urllib3
 import re
-from geopy.geocoders import Nominatim
+from geopy.geocoders import GoogleV3
 import json
 
 http = urllib3.PoolManager()
-geolocator = Nominatim()
+geolocator = GoogleV3()
 
 def getpage(url):
     try:
@@ -26,10 +26,18 @@ def getshops(soup):
 
         province = details[3][:details[3].index("<br/>")]
 
-        location = geolocator.geocode(details[1] + ", " + details[2] + ", " + province)
+        location = geolocator.geocode(details[1] + ", " + details[2] + ", " + province, timeout=60)
 
-        shoplist.append({"name": shop_name, "steetnr": details[1], "zipcodecomm": details[2], "province": province, "lat": location.latitude, "long": location.longitude})
-        
+
+        if location == None:
+            lat = ""
+            long = ""
+        else:
+            lat = location.latitude
+            long = location.longitude
+
+        shoplist.append({"name": shop_name, "steetnr": details[1], "zipcodecomm": details[2], "province": province, "lat": lat, "long": long})
+
         index + 1
 
     index = 0
@@ -45,7 +53,7 @@ def getshops(soup):
 def main():
     print("main")
 
-    soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=tienen&radius=50&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
+    soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=tienen&radius=10&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
                          , 'html.parser')
 
     getshops(soup)
