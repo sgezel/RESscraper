@@ -3,9 +3,18 @@ import urllib3
 import re
 from geopy.geocoders import GoogleV3
 import json
+from pymongo import MongoClient
+from ConfigParser import SafeConfigParser
 
 http = urllib3.PoolManager()
-geolocator = GoogleV3()
+config = SafeConfigParser()
+config.read('config.ini')
+geolocator = GoogleV3(config.get('main', 'googleapi'))
+
+client = MongoClient()
+client = MongoClient("mongodb://localhost:27017")
+db = client.res
+
 
 def getpage(url):
     try:
@@ -18,7 +27,7 @@ def getpage(url):
 def getshops(soup):
 
     shoplist = []
-    index = 0
+
     for shop in soup.find_all("td", {"valign":"top", "width":"30%"}):
         details = [x.strip() for x in str(shop.a.contents).split('<br>')]
         shop_name = details[0]
@@ -26,29 +35,38 @@ def getshops(soup):
 
         province = details[3][:details[3].index("<br/>")]
 
-        location = geolocator.geocode(details[1] + ", " + details[2] + ", " + province, timeout=60)
-
-
-        if location == None:
-            lat = ""
-            long = ""
-        else:
-            lat = location.latitude
-            long = location.longitude
-
-        shoplist.append({"name": shop_name, "steetnr": details[1], "zipcodecomm": details[2], "province": province, "lat": lat, "long": long})
-
-        index + 1
+        shoplist.append({"name": shop_name, "steetnr": details[1], "zipcodecomm": details[2], "province": province})
 
     index = 0
     for desc in soup.find_all("td", {"valign":"top", "class":"normal", "colspan":"5"}):
         obj = shoplist[index]
         obj["resp"] = re.findall(r'\d+', desc.contents[0])[0]
         obj["category"] = desc.b.text
-        index + 1
+        #obj["_id"] = ObjectId()
 
-    with open('data.json', 'w') as outfile:
-        json.dump(shoplist, outfile)
+
+        if db.shops.find({"name": obj["name"]}).count() == 0:
+
+            location = geolocator.geocode(details[1] + ", " + details[2] + ", " + province)
+
+            if location == None:
+                lat = ""
+                long = ""
+            else:
+                lat = location.latitude
+                long = location.longitude
+
+            obj["lat"] = lat
+            obj["long"] = long
+
+            result = db.shops.insert(obj)
+            print(result)
+        else:
+            print("Shop already in database" + str(db.shops.find({"name": obj["name"]}).count()) + " " + obj["name"])
+
+        index = index + 1
+    #with open('data.json', 'w') as outfile:
+    #    json.dump(shoplist, outfile)
 
 def main():
     print("main")
