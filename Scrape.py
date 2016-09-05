@@ -2,7 +2,6 @@ from bs4 import BeautifulSoup
 import urllib3
 import re
 from geopy.geocoders import GoogleV3
-import json
 from pymongo import MongoClient
 from ConfigParser import SafeConfigParser
 from bson.json_util import dumps
@@ -13,7 +12,7 @@ config.read('config.ini')
 geolocator = GoogleV3(config.get('main', 'googleapi'))
 
 client = MongoClient()
-client = MongoClient("mongodb://localhost:27017")
+client = MongoClient("mongodb://"+ config.get('db', 'username') + ":" + config.get('db', 'password') + "@" + config.get('db', 'host') + ":" + config.get('db', 'port')+"/" + config.get('db', 'db'))
 db = client.res
 
 
@@ -72,7 +71,6 @@ def getshops(soup):
 
 
 def main():
-    print("main")
 
     steden = ["leuven"]
     radius = "100"
@@ -84,11 +82,23 @@ def main():
 
     dumpJSON()
 
+    #updateLatLong()
 
 def dumpJSON():
     with open('data.json', 'w') as outfile:
         outfile.write("data = " + dumps(db.shops.find({"lat": {"$exists" : True, "$ne" : ""} })))
 
-#TODO: write function to update empty lat and long values
+def updateLatLong():
+    cursor = db.shops.find()
+    for shop in cursor:
+        print("updating  " + shop["name"])
+        location = geolocator.geocode(shop["steetnr"] + ", " + shop["zipcodecomm"] + ", " + shop["province"])
+        print("old: " + str(shop["lat"]) + ", " + str(shop["long"]))
+        print("new: " + str(location.latitude) + ", " + str(location.longitude))
+        if location != None:
+            if location.longitude != shop["long"] and location.latitude != shop["lat"]:
+                db.shops.update_one({'_id':shop["_id"]}, {'$set':{"lat": location.latitude, "long":location.longitude}}, upsert=False)
+
+
 if __name__ == '__main__':
     main()
