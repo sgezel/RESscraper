@@ -5,6 +5,7 @@ from geopy.geocoders import GoogleV3
 import json
 from pymongo import MongoClient
 from ConfigParser import SafeConfigParser
+from bson.json_util import dumps
 
 http = urllib3.PoolManager()
 config = SafeConfigParser()
@@ -16,6 +17,8 @@ client = MongoClient("mongodb://localhost:27017")
 db = client.res
 
 
+shoplist = []
+
 def getpage(url):
     try:
         request = http.request("GET",url)
@@ -25,8 +28,6 @@ def getpage(url):
     return ""
 
 def getshops(soup):
-
-    shoplist = []
 
     for shop in soup.find_all("td", {"valign":"top", "width":"30%"}):
         details = [x.strip() for x in str(shop.a.contents).split('<br>')]
@@ -42,8 +43,6 @@ def getshops(soup):
         obj = shoplist[index]
         obj["resp"] = re.findall(r'\d+', desc.contents[0])[0]
         obj["category"] = desc.b.text
-        #obj["_id"] = ObjectId()
-
 
         if db.shops.find({"name": obj["name"]}).count() == 0:
 
@@ -65,17 +64,26 @@ def getshops(soup):
             print("Shop already in database" + str(db.shops.find({"name": obj["name"]}).count()) + " " + obj["name"])
 
         index = index + 1
-    #with open('data.json', 'w') as outfile:
-    #    json.dump(shoplist, outfile)
+
 
 def main():
     print("main")
 
-    soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=tienen&radius=10&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
-                         , 'html.parser')
+    steden = ["tienen", "leuven", "bierbeek", "landen", "sint-truiden", "brussel", "hasselt", "antwerpen", "gent"]
+    radius = "20"
 
-    getshops(soup)
+    # for stad in steden:
+    #     soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
+    #                      , 'html.parser')
+    #     getshops(soup)
+
+    dumpJSON()
 
 
+def dumpJSON():
+    with open('data.json', 'w') as outfile:
+        outfile.write("data = " + dumps(db.shops.find({"lat": {"$exists" : True, "$ne" : ""} })))
+
+#TODO: write function to update empty lat and long values
 if __name__ == '__main__':
     main()
