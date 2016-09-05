@@ -41,7 +41,12 @@ def getshops(soup):
     index = 0
     for desc in soup.find_all("td", {"valign":"top", "class":"normal", "colspan":"5"}):
         obj = shoplist[index]
-        obj["resp"] = re.findall(r'\d+', desc.contents[0])[0]
+        resp = re.findall(r'\d+', desc.contents[0])
+        if len(resp) > 0:
+            obj["resp"] = re.findall(r'\d+', desc.contents[0])[0]
+        else:
+            obj["resp"] = ""
+            
         obj["category"] = desc.b.text
 
         if db.shops.find({"name": obj["name"]}).count() == 0:
@@ -69,13 +74,13 @@ def getshops(soup):
 def main():
     print("main")
 
-    steden = ["tienen", "leuven", "bierbeek", "landen", "sint-truiden", "brussel", "hasselt", "antwerpen", "gent"]
-    radius = "20"
+    steden = ["leuven"]
+    radius = "100"
 
-    # for stad in steden:
-    #     soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
-    #                      , 'html.parser')
-    #     getshops(soup)
+    for stad in steden:
+         soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
+                          , 'html.parser')
+         getshops(soup)
 
     dumpJSON()
 
