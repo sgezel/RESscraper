@@ -29,7 +29,7 @@
           center: {lat: 50.879844, lng: 4.700518},
           zoom: 15
         });
-        var infoWindow = new google.maps.InfoWindow({map: map});
+        var infoWindow = new google.maps.InfoWindow({map: map, content: "test"});
 
         // Try HTML5 geolocation.
         if (navigator.geolocation) {
@@ -57,103 +57,219 @@
 			  icon: getIcon(obj.category)
 			});
 			
+			marker.addListener('click', function() {
+				infoWindow.open(map, marker);
+			  });
+			
 		}
       }
 		
 	function getIcon(cat)
 	{	
 		if(cat.indexOf("Restaurant")>-1 || cat.indexOf("Brasserie - taverne - bistro")>-1)
-			return "icons/restaurant.png";
+			return "images/restaurant.png";
 		
-		if(cat.indexOf("Schoonheidsinstituten")>-1)
-			return "icons/beautysalon.png";
+		if(cat.indexOf("Schoonheidsinstituten")>-1 || cat.indexOf("Visagiste")>-1)
+			return "images/beautysalon.png";
 			
-		if(cat.indexOf("Kleding - dames")>-1)
-			return "icons/clothers_female.png";	
+		if(cat.indexOf("Kleding - dames")>-1 || cat.indexOf("Kleding - Ceremonie, bruids- en communie")>-1 || cat.indexOf("Kleding - grote maten")>-1 || cat.indexOf("Kousen - panty")>-1)
+			return "images/clothers_female.png";	
 		
 		if(cat.indexOf("Frituren")>-1)
-			return "icons/fastfood.png";
-		
+			return "images/fastfood.png";		
 		
 		if(cat.indexOf("Sandwich-bar")>-1)
-			return "icons/sandwich-2.png";
+			return "images/sandwich-2.png";
 			
-		if(cat.indexOf("Traiteurs")>-1)
-			return "icons/farmstand.png";
+		if(cat.indexOf("Traiteurs")>-1  || cat.indexOf("Catering")>-1)
+			return "images/farmstand.png";
 		
 		if(cat.indexOf("Feestzalen")>-1)
-			return "icons/party-2.png";
+			return "images/party-2.png";
 		
 		if(cat.indexOf("Rijschool")>-1)
-			return "icons/car.png";
+			return "images/car.png";
 		
-		if(cat.indexOf("Geschenken")>-1)
-			return "icons/gifts.png";
+		if(cat.indexOf("Geschenken")>-1 || cat.indexOf("Relatie- publiciteitsgeschenken")>-1)
+			return "images/gifts.png";
 		
-		if(cat.indexOf("Kleding - heren")>-1)
-			return "icons/clothers_male.png";
+		if(cat.indexOf("Kleding - heren")>-1 || cat.indexOf("Lederwaren")>-1 || cat.indexOf("Kleding - tieners en vrije tijd")>-1 ||cat.indexOf("Kleding - kinderen / baby's")>-1)
+			return "images/clothers_male.png";
 		
-		if(cat.indexOf("Bloemen en planten")>-1)
-			return "icons/flowers.png";		
+		if(cat.indexOf("Bloemen en planten")>-1  || cat.indexOf("Verhuur - planten")>-1)
+			return "images/flowers.png";		
 		
 		if(cat.indexOf("Cafe")>-1)
-			return "icons/bar.png";	
+			return "images/bar.png";	
 		
-		if(cat.indexOf("Schoonheidsproducten")>-1)
-			return "icons/perfumery.png";	
+		if(cat.indexOf("Schoonheidsproducten")>-1 || cat.indexOf("Parfumerie")>-1)
+			return "images/perfumery.png";	
 
 		if(cat.indexOf("Matrassen")>-1)
-			return "icons/supermarket.png";
+			return "images/supermarket.png";
 			
-		if(cat.indexOf("Opticien")>-1)
-			return "icons/glasses.png";
+		if(cat.indexOf("Opticien")>-1 || cat.indexOf("Optometrist")>-1)
+			return "images/glasses.png";
 		
-		if(cat.indexOf("Meubelen - bedden")>-1)
-			return "icons/supermarket.png";
+		if(cat.indexOf("Meubelen - bedden")>-1  || cat.indexOf("Dekbedden - donsdekens")>-1 || cat.indexOf("Huislinnen - bedlinnen")>-1 || cat.indexOf("Meubelen - waterbedden")>-1)
+			return "images/lodging.png";
 			
 		if(cat.indexOf("Bar")>-1)
-			return "icons/bar.png";
+			return "images/bar.png";
 		
 		if(cat.indexOf("Kapper - kapsalons")>-1)
-			return "icons/barber.png";
+			return "images/barber.png";
 			
-		if(cat.indexOf("Schoenen")>-1)
-			return "icons/shoes.png";
+		if(cat.indexOf("Schoenen")>-1 || cat.indexOf("Schoenen - sport")>-1 || cat.indexOf("Schoenmakerijen")>-1)
+			return "images/shoes.png";
 		
 		if(cat.indexOf("Pizzerias")>-1)
-			return "icons/pizzaria.png";
+			return "images/pizzaria.png";
 		
-		if(cat.indexOf("Sauna")>-1)
-			return "icons/sauna.png";
+		if(cat.indexOf("Sauna")>-1 || cat.indexOf("Kuuroord")>-1 || cat.indexOf("Zonnebankcentra")>-1)
+			return "images/sauna.png";
 		
 		if(cat.indexOf("Hotels")>-1)
-			return "icons/hotel.png";
+			return "images/hotel.png";
 		
 		if(cat.indexOf("Binnenhuisinrichting - wooninrichting")>-1)
-			return "icons/arch.png";
+			return "images/arch.png";
 		
 		if(cat.indexOf("Bed & breakfast / vakantiewoningen")>-1)
-			return "icons/bed_breakfast.png";
+			return "images/bed_breakfast.png";
 		
 		if(cat.indexOf("Sportclubs")>-1)
-			return "icons/squash.png";
+			return "images/squash.png";
 		
-		if(cat.indexOf("Juwelen - fantasie")>-1)
-			return "icons/jewelry.png";
+		if(cat.indexOf("Juwelen - fantasie")>-1 || cat.indexOf("Juwelen")>-1)
+			return "images/jewelry.png";
 		
-		if(cat.indexOf("Voedingssupplementen")>-1)
-			return "icons/fitness.png";
-		
-		if(cat.indexOf("Ijssalons - Tearoom")>-1)
-			return "icons/icecream.png";		
+		if(cat.indexOf("Vergaderzalen")>-1)
+			return "images/presentation.png";
 		
 		if(cat.indexOf("Nagelstudio")>-1)
-			return "icons/icon-nailsalon.png";
+			return "images/icon-nailsalon.png";		
+		
+		if(cat.indexOf("Voedingssupplementen")>-1 || cat.indexOf("Fitnesscentra")>-1)
+			return "images/fitness.png";
+		
+		if(cat.indexOf("Ijssalons - Tearoom")>-1)
+			return "images/icecream.png";		
+		
+		if(cat.indexOf("Voeding")>-1 || cat.indexOf("Dieet- en natuurvoeding")>-1 || cat.indexOf("Biologische producten")>-1)
+			return "images/grocery.png";	
+		
+		if(cat.indexOf("Wijnen - sterke dranken")>-1)
+			return "images/winebar.png";	
+		
+		if(cat.indexOf("Beenhouwerij - slagers")>-1)
+			return "images/liquor.png";
+			
+		if(cat.indexOf("Fietsen")>-1)
+			return "images/bicycle_shop.png";
+		
+		if(cat.indexOf("Verven - behang")>-1)
+			return "images/paint.png";
+				
+		if(cat.indexOf("Evenementen - organisatie - presentator")>-1 || cat.indexOf("Springkastelen")>-1)
+			return "images/smiley_happy.png";
+		
+		if(cat.indexOf("Kleding - sport en vrije tijd")>-1 || cat.indexOf("Sportartikelen")>-1)
+			return "images/tennis.png";
+		
+		if(cat.indexOf("Verlichting")>-1)
+			return "images/poweroutage.png";
+		
+		if(cat.indexOf("Erotiek")>-1)
+			return "images/loveinterest.png";
+			
+		if(cat.indexOf("Meubelen")>-1 || cat.indexOf("Gordijnen")>-1 || cat.indexOf("Meubelen - zetels / relax")>-1 || cat.indexOf("Meubelen - kantoor")>-1);
+			return "images/homecenter.png";
+		
+		if(cat.indexOf("Televisie en radiotoestellen")>-1)
+			return "images/tv.png";
+		
+		if(cat.indexOf("Fotografen")>-1)
+			return "images/photography.png";
+		
+		if(cat.indexOf("Lingerie - nachtkleding - ondergoed")>-1)
+			return "images/lingerie.png";
+	
+		if(cat.indexOf("Huishoudtoestellen - electro")>-1 || cat.indexOf("Huishoudartikelen")>-1 )
+			return "images/kitchen.png";
+		
+		if(cat.indexOf("Begrafeniskransen")>-1)
+			return "images/catholicgrave.png";
+			
+		if(cat.indexOf("Auto - toebehoren")>-1 || cat.indexOf("Garage - onderhoud")>-1 || cat.indexOf("Carrosserie-herstellingen")>-1)
+			return "images/repair.png";
+		
+		if(cat.indexOf("Kantoormaterialen")>-1)
+			return "images/schreibwaren_web.png";
+			
+		if(cat.indexOf("Bakkerij - brood en banket")>-1)
+			return "images/bread.png";
+			
+		if(cat.indexOf("Tuincentra - tuindecoratie - tuinmaterialen")>-1 || cat.indexOf("Meubelen - tuin")>-1)
+			return "images/forest.png";
+			
+		if(cat.indexOf("Groenten & fruit")>-1)
+			return "images/fruits.png";
+		
+		if(cat.indexOf("Koffiebar")>-1)
+			return "images/coffee.png";
+		
+		if(cat.indexOf("Computers - hardware")>-1 || cat.indexOf("Computer - software")>-1)
+			return "images/computers.png";
+		
+		if(cat.indexOf("Vloerbekleding")>-1 || cat.indexOf("Parketvloeren")>-1)
+			return "images/tile-shop.png";
+		
+		if(cat.indexOf("Kopiecenter")>-1)
+			return "images/printer.png";
+		
+		if(cat.indexOf("Chocolatiers")>-1 || cat.indexOf("Doopsuiker - snoepgoed")>-1)
+			return "images/candy.png";
+			
+		
 			
 		if(cat.indexOf("Pedicure")>-1)
-			return "icons/footprint.png";
+			return "images/footprint.png";
+		
+		if(cat.indexOf("Carwash")>-1)
+			return "images/carwash.png";
+		
+		if(cat.indexOf("Moto's & uitrusting - Scooters")>-1)
+			return "images/motorcycle.png";
+		
+		if(cat.indexOf("Therapeuten")>-1)
+			return "images/therapy.png";
 			
-		return "icons/star.png";
+		if(cat.indexOf("Boekhandels")>-1)
+			return "images/library.png";	
+			
+		if(cat.indexOf("Kunstgalerijen")>-1)
+			return "images/artgallery.png";	
+
+		if(cat.indexOf("Naaigerief")>-1 || cat.indexOf("Borduurwerken")>-1)
+			return "images/craftstore.png";	
+		
+		if(cat.indexOf("Sloten - sleutels")>-1)
+			return "images/lock-2.png";
+		
+		if(cat.indexOf("Stoffen - zijde")>-1)
+			return "images/textiles.png";
+			
+		if(cat.indexOf("Dierenpension")>-1)
+			return "images/animal-shelter-export.png";	
+		
+		if(cat.indexOf("Taxi's")>-1)
+			return "images/taxi.png";
+			
+		if(cat.indexOf("Webshop")>-1)
+			return "images/country.png";
+
+		return "images/star.png";
 	}
       function handleLocationError(browserHasGeolocation, infoWindow, pos) {
         infoWindow.setPosition(pos);

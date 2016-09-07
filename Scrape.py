@@ -50,9 +50,11 @@ def getshops(soup):
             
         obj["category"] = desc.b.text.split("|")
 
+
+
         if db.shops.find({"name": obj["name"]}).count() == 0:
 
-            location = geolocator.geocode(obj['streetnr'] + ", " + obj["zipcodecomm"] + ", " + obj["province"])
+            # location = geolocator.geocode(obj['streetnr'] + ", " + obj["zipcodecomm"] + ", " + obj["province"])
 
             if location == None:
                 lat = ""
@@ -74,16 +76,17 @@ def getshops(soup):
 
 def main():
     # getShops()
-    # dumpJSON()
+    dumpJSON()
 
     # updateLatLong()
 
     # cleanup()
-    listcat()
+    # listcat()
+    # updateDesc()
 
 def getShops():
     steden = ["leuven"]
-    radius = "100"
+    radius = "5"
 
     for stad in steden:
          soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
@@ -115,6 +118,42 @@ def cleanup():
         #print(cleaned_cat)
         db.shops.update_one({'_id':shop["_id"]}, {'$set':{"category": cleaned_cat}}, upsert=False)
 
+def updateDesc():
+    steden = ["leuven"]
+    radius = "100"
+
+    for stad in steden:
+        soup = BeautifulSoup(getpage(
+            "http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
+                             , 'html.parser')
+
+    for shop in soup.find_all("td", {"valign": "top", "width": "30%"}):
+        details = [x.strip() for x in str(shop.a.contents).split('<br>')]
+        shop_name = details[0]
+        shop_name = shop_name[
+                    details[0].index("\\r\\n\\r\\n\\t\\t\\t\\t\\t\\t\\t") + len("\\r\\n\\r\\n\\t\\t\\t\\t\\t\\t\\t"):-2]
+
+        province = details[3][:details[3].index("<br/>")]
+
+        shoplist.append({"name": shop_name, "streetnr": details[1], "zipcodecomm": details[2], "province": province})
+
+    index = 0
+    for desc in soup.find_all("td", {"valign": "top", "class": "normal", "colspan": "5"}):
+        obj = shoplist[index]
+        resp = re.findall(r'\d+', desc.contents[0])
+        if len(resp) > 0:
+            obj["resp"] = re.findall(r'\d+', desc.contents[0])[0]
+        else:
+            obj["resp"] = ""
+
+        obj["category"] = desc.b.text.split("|")
+
+        cursor = db.shops.find({"name": obj["name"]})
+        for shop in cursor:
+            db.shops.update_one({'_id': shop["_id"]}, {'$set': {"description": desc.contents[2][3:]}})
+            print(desc.contents[2][3:])
+        index = index + 1
+
 def listcat():
     cursor = db.shops.find()
     catlist = {}
@@ -128,5 +167,6 @@ def listcat():
     print(catlist)
     with open('cat.json', 'w') as outfile:
         json.dump(sorted(catlist.items(), key=operator.itemgetter(1)), outfile)
+
 if __name__ == '__main__':
     main()
