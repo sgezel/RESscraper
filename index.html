@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>res.codepage.be</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+	<script src="data.json"></script>
+    <script>
+      // Note: This example requires that you consent to location sharing when
+      // prompted by your browser. If you see the error "The Geolocation service
+      // failed.", it means you probably did not give permission for the browser to
+      // locate you.
+
+      function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: 50.879844, lng: 4.700518},
+          zoom: 15
+        });
+        var infoWindow = new google.maps.InfoWindow({map: map});
+
+        // Try HTML5 geolocation.
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            var pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            map.setCenter(pos);
+          }, function() {
+            handleLocationError(true, infoWindow, map.getCenter());
+          });
+        } else {
+          // Browser doesn't support Geolocation
+          handleLocationError(false, infoWindow, map.getCenter());
+        }
+		
+		for(var i = 0; i < data.length; i++) {
+			var obj = data[i];
+			
+			var marker = new google.maps.Marker({
+			  position: new google.maps.LatLng(obj.lat,obj.long),
+			  map: map,
+			  title: obj.name,
+			  icon: getIcon(obj.category)
+			});
+			
+		}
+      }
+		
+	function getIcon(cat)
+	{	
+		if(cat.indexOf("Restaurant")>-1 || cat.indexOf("Brasserie - taverne - bistro")>-1)
+			return "icons/restaurant.png";
+		
+		if(cat.indexOf("Schoonheidsinstituten")>-1)
+			return "icons/beautysalon.png";
+			
+		if(cat.indexOf("Kleding - dames")>-1)
+			return "icons/clothers_female.png";	
+		
+		if(cat.indexOf("Frituren")>-1)
+			return "icons/fastfood.png";
+		
+		
+		if(cat.indexOf("Sandwich-bar")>-1)
+			return "icons/sandwich-2.png";
+			
+		if(cat.indexOf("Traiteurs")>-1)
+			return "icons/farmstand.png";
+		
+		if(cat.indexOf("Feestzalen")>-1)
+			return "icons/party-2.png";
+		
+		if(cat.indexOf("Rijschool")>-1)
+			return "icons/car.png";
+		
+		if(cat.indexOf("Geschenken")>-1)
+			return "icons/gifts.png";
+		
+		if(cat.indexOf("Kleding - heren")>-1)
+			return "icons/clothers_male.png";
+		
+		if(cat.indexOf("Bloemen en planten")>-1)
+			return "icons/flowers.png";		
+		
+		if(cat.indexOf("Cafe")>-1)
+			return "icons/bar.png";	
+		
+		if(cat.indexOf("Schoonheidsproducten")>-1)
+			return "icons/perfumery.png";	
+
+		if(cat.indexOf("Matrassen")>-1)
+			return "icons/supermarket.png";
+			
+		if(cat.indexOf("Opticien")>-1)
+			return "icons/glasses.png";
+		
+		if(cat.indexOf("Meubelen - bedden")>-1)
+			return "icons/supermarket.png";
+			
+		if(cat.indexOf("Bar")>-1)
+			return "icons/bar.png";
+		
+		if(cat.indexOf("Kapper - kapsalons")>-1)
+			return "icons/barber.png";
+			
+		if(cat.indexOf("Schoenen")>-1)
+			return "icons/shoes.png";
+		
+		if(cat.indexOf("Pizzerias")>-1)
+			return "icons/pizzaria.png";
+		
+		if(cat.indexOf("Sauna")>-1)
+			return "icons/sauna.png";
+		
+		if(cat.indexOf("Hotels")>-1)
+			return "icons/hotel.png";
+		
+		if(cat.indexOf("Binnenhuisinrichting - wooninrichting")>-1)
+			return "icons/arch.png";
+		
+		if(cat.indexOf("Bed & breakfast / vakantiewoningen")>-1)
+			return "icons/bed_breakfast.png";
+		
+		if(cat.indexOf("Sportclubs")>-1)
+			return "icons/squash.png";
+		
+		if(cat.indexOf("Juwelen - fantasie")>-1)
+			return "icons/jewelry.png";
+		
+		if(cat.indexOf("Voedingssupplementen")>-1)
+			return "icons/fitness.png";
+		
+		if(cat.indexOf("Ijssalons - Tearoom")>-1)
+			return "icons/icecream.png";		
+		
+		if(cat.indexOf("Nagelstudio")>-1)
+			return "icons/icon-nailsalon.png";
+			
+		if(cat.indexOf("Pedicure")>-1)
+			return "icons/footprint.png";
+			
+		return "icons/star.png";
+	}
+      function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+        infoWindow.setPosition(pos);
+      }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyABjsFHZ_yJuISEACPOlZBw7LOoZG7P6qQ&callback=initMap">
+    </script>
+  </body>
+</html>

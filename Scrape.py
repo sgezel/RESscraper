@@ -5,6 +5,8 @@ from geopy.geocoders import GoogleV3
 from pymongo import MongoClient
 from ConfigParser import SafeConfigParser
 from bson.json_util import dumps
+import json
+import operator
 
 http = urllib3.PoolManager()
 config = SafeConfigParser()
@@ -35,7 +37,7 @@ def getshops(soup):
 
         province = details[3][:details[3].index("<br/>")]
 
-        shoplist.append({"name": shop_name, "steetnr": details[1], "zipcodecomm": details[2], "province": province})
+        shoplist.append({"name": shop_name, "streetnr": details[1], "zipcodecomm": details[2], "province": province})
 
     index = 0
     for desc in soup.find_all("td", {"valign":"top", "class":"normal", "colspan":"5"}):
@@ -46,11 +48,11 @@ def getshops(soup):
         else:
             obj["resp"] = ""
             
-        obj["category"] = desc.b.text
+        obj["category"] = desc.b.text.split("|")
 
         if db.shops.find({"name": obj["name"]}).count() == 0:
 
-            location = geolocator.geocode(details[1] + ", " + details[2] + ", " + province)
+            location = geolocator.geocode(obj['streetnr'] + ", " + obj["zipcodecomm"] + ", " + obj["province"])
 
             if location == None:
                 lat = ""
@@ -71,7 +73,15 @@ def getshops(soup):
 
 
 def main():
+    # getShops()
+    # dumpJSON()
 
+    # updateLatLong()
+
+    # cleanup()
+    listcat()
+
+def getShops():
     steden = ["leuven"]
     radius = "100"
 
@@ -80,16 +90,12 @@ def main():
                           , 'html.parser')
          getshops(soup)
 
-    dumpJSON()
-
-    #updateLatLong()
-
 def dumpJSON():
     with open('data.json', 'w') as outfile:
         outfile.write("data = " + dumps(db.shops.find({"lat": {"$exists" : True, "$ne" : ""} })))
 
 def updateLatLong():
-    cursor = db.shops.find()
+    cursor = db.shops.find({"name":{'$regex':'^Z'}})
     for shop in cursor:
         print("updating  " + shop["name"])
         location = geolocator.geocode(shop["steetnr"] + ", " + shop["zipcodecomm"] + ", " + shop["province"])
@@ -99,6 +105,28 @@ def updateLatLong():
             if location.longitude != shop["long"] and location.latitude != shop["lat"]:
                 db.shops.update_one({'_id':shop["_id"]}, {'$set':{"lat": location.latitude, "long":location.longitude}}, upsert=False)
 
+def cleanup():
+    cursor = db.shops.find()
+    for shop in cursor:
+        cleaned_cat = []
+        for cat in shop["category"]:
+            cleaned_cat.append(cat.strip())
 
+        #print(cleaned_cat)
+        db.shops.update_one({'_id':shop["_id"]}, {'$set':{"category": cleaned_cat}}, upsert=False)
+
+def listcat():
+    cursor = db.shops.find()
+    catlist = {}
+    for shop in cursor:
+        for cat in shop["category"]:
+            if cat not in catlist:
+                catlist[cat] = 1
+            else:
+                catlist[cat] = catlist[cat] + 1
+
+    print(catlist)
+    with open('cat.json', 'w') as outfile:
+        json.dump(sorted(catlist.items(), key=operator.itemgetter(1)), outfile)
 if __name__ == '__main__':
     main()
