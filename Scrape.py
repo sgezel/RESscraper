@@ -75,7 +75,7 @@ def getshops(soup):
 
 
 def main():
-    # getShops()
+    getShops()
     dumpJSON()
 
     # updateLatLong()
