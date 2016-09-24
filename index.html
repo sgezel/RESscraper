@@ -14,23 +14,30 @@
         height: 100%;
       }
     </style>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-83800176-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
   </head>
   <body>
     <div id="map"></div>
 	<script src="data.json"></script>
     <script>
-      // Note: This example requires that you consent to location sharing when
-      // prompted by your browser. If you see the error "The Geolocation service
-      // failed.", it means you probably did not give permission for the browser to
-      // locate you.
-
       function initMap() {
+	  var pos = {lat: 50.879844, lng: 4.700518};
         var map = new google.maps.Map(document.getElementById('map'), {
-          center: {lat: 50.879844, lng: 4.700518},
+          center: pos,
           zoom: 15
         });
-        var infoWindow = new google.maps.InfoWindow({map: map, content: "test"});
-
+        var infoWindow = new google.maps.InfoWindow({map: map	});
+		infoWindow.close();
+		
         // Try HTML5 geolocation.
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(function(position) {
@@ -39,37 +46,80 @@
               lng: position.coords.longitude
             };
             map.setCenter(pos);
+			
+			var obj = {};
+			obj.name = "Current location";
+			obj.category = "Home";
+			obj.description = "Current location";
+			obj.lat = position.coords.latitude;
+			obj.long = position.coords.longitude;
+			
+			addMarker2(obj, map);
+			
           }, function() {
-            handleLocationError(true, infoWindow, map.getCenter());
+
           });
         } else {
-          // Browser doesn't support Geolocation
-          handleLocationError(false, infoWindow, map.getCenter());
+         
         }
 		
 		for(var i = 0; i < data.length; i++) {
 			var obj = data[i];
 			
-			var marker = new google.maps.Marker({
-			  position: new google.maps.LatLng(obj.lat,obj.long),
-			  map: map,
-			  title: obj.name,
-			  icon: getIcon(obj.category)
-			});
-			
-			marker.addListener('click', function() {
-				infoWindow.open(map, marker);
-			  });
+			addMarker(obj, map, infoWindow);
 			
 		}
       }
+	
+	
+	function getContentString(obj)
+	{
+		var content = "";
+		content += "<h5>" + obj.name + "</h5>";
+		content += "<img src='images/" + obj.resp + ".jpg' />";
+		content += "<p><b><i>" +  obj.category.join()  + "</i></b></p>";
+		content += "<p><a href='http://maps.apple.com/?daddr=" +  obj.streetnr + ", "+  obj.zipcodecomm + ", "  +obj.province  + "'>" + obj.streetnr + ", "+  obj.zipcodecomm + ", "  +obj.province + "</a></p>";
+		content += "<p>" + obj.description + "</p>";
 		
+		return content;
+	}
+	
+	function addMarker(obj, map, infoWindow)
+	{
+		var marker = new google.maps.Marker({
+			  position: new google.maps.LatLng(obj.lat,obj.long),
+			  map: map,
+			  title: obj.name,
+			  icon: getIcon(obj.category),
+			  content: obj.description
+			});
+			
+			marker.addListener('click', function() {
+				infoWindow.setContent(getContentString(obj))
+				infoWindow.open(map, marker);
+			  });
+	}
+	
+	function addMarker2(obj, map)
+	{
+		var marker = new google.maps.Marker({
+			  position: new google.maps.LatLng(obj.lat,obj.long),
+			  map: map,
+			  title: obj.name,
+			  icon: getIcon(obj.category),
+			  content: obj.description
+			});
+	}
+	
 	function getIcon(cat)
 	{	
+		if (cat == "Home")
+			return "images/home-2.png";
+			
 		if(cat.indexOf("Restaurant")>-1 || cat.indexOf("Brasserie - taverne - bistro")>-1)
 			return "images/restaurant.png";
 		
-		if(cat.indexOf("Schoonheidsinstituten")>-1 || cat.indexOf("Visagiste")>-1)
+		if(cat.indexOf("Schoonheidsinstituten")>-1 || cat.indexOf("Visagiste")>-1 || cat.indexOf("Zonnebankcentra")>-1)
 			return "images/beautysalon.png";
 			
 		if(cat.indexOf("Kleding - dames")>-1 || cat.indexOf("Kleding - Ceremonie, bruids- en communie")>-1 || cat.indexOf("Kleding - grote maten")>-1 || cat.indexOf("Kousen - panty")>-1)
@@ -183,7 +233,7 @@
 		if(cat.indexOf("Erotiek")>-1)
 			return "images/loveinterest.png";
 			
-		if(cat.indexOf("Meubelen")>-1 || cat.indexOf("Gordijnen")>-1 || cat.indexOf("Meubelen - zetels / relax")>-1 || cat.indexOf("Meubelen - kantoor")>-1);
+		if(cat.indexOf("Meubelen")>-1 || cat.indexOf("Gordijnen")>-1 || cat.indexOf("Meubelen - zetels / relax")>-1 || cat.indexOf("Meubelen - kantoor")>-1)
 			return "images/homecenter.png";
 		
 		if(cat.indexOf("Televisie en radiotoestellen")>-1)
@@ -198,11 +248,11 @@
 		if(cat.indexOf("Huishoudtoestellen - electro")>-1 || cat.indexOf("Huishoudartikelen")>-1 )
 			return "images/kitchen.png";
 		
-		if(cat.indexOf("Begrafeniskransen")>-1)
+		if(cat.indexOf("Begrafeniskransen")>-1 || cat.indexOf("Begrafenisondernemingen - crematies")>-1)
 			return "images/catholicgrave.png";
 			
-		if(cat.indexOf("Auto - toebehoren")>-1 || cat.indexOf("Garage - onderhoud")>-1 || cat.indexOf("Carrosserie-herstellingen")>-1)
-			return "images/repair.png";
+		if(cat.indexOf("Auto - toebehoren")>-1 || cat.indexOf("Garage - onderhoud")>-1 || cat.indexOf("Carrosserie-herstellingen")>-1 || cat.indexOf("Autobanden")>-1)
+			return "images/caraccident.png";
 		
 		if(cat.indexOf("Kantoormaterialen")>-1)
 			return "images/schreibwaren_web.png";
@@ -225,14 +275,12 @@
 		if(cat.indexOf("Vloerbekleding")>-1 || cat.indexOf("Parketvloeren")>-1)
 			return "images/tile-shop.png";
 		
-		if(cat.indexOf("Kopiecenter")>-1)
+		if(cat.indexOf("Kopiecenter")>-1 || cat.indexOf("Fotokopieermachines")>-1)
 			return "images/printer.png";
 		
 		if(cat.indexOf("Chocolatiers")>-1 || cat.indexOf("Doopsuiker - snoepgoed")>-1)
 			return "images/candy.png";
-			
-		
-			
+					
 		if(cat.indexOf("Pedicure")>-1)
 			return "images/footprint.png";
 		
@@ -242,7 +290,7 @@
 		if(cat.indexOf("Moto's & uitrusting - Scooters")>-1)
 			return "images/motorcycle.png";
 		
-		if(cat.indexOf("Therapeuten")>-1)
+		if(cat.indexOf("Therapeuten")>-1 || cat.indexOf("Logopedie")>-1)
 			return "images/therapy.png";
 			
 		if(cat.indexOf("Boekhandels")>-1)
@@ -268,7 +316,31 @@
 			
 		if(cat.indexOf("Webshop")>-1)
 			return "images/country.png";
+			
+		if(cat.indexOf("Speelgoed")>-1)
+			return "images/toys.png";
+		
+		if(cat.indexOf("Dierenspeciaalzaak")>-1)
+			return "images/cat-2.png";
+			
+		if(cat.indexOf("Vijvers - aanleg & toebehoren")>-1)
+			return "images/pond.png";
 
+		if(cat.indexOf("Dokters in geneeskunde")>-1 || cat.indexOf("Apothekers")>-1)
+			return "images/medicine.png";
+			
+		if(cat.indexOf("Ballondecoratie")>-1)
+			return "images/balloons.png";
+		
+		if(cat.indexOf("Doe het zelf zaak")>-1)
+			return "images/tools.png";
+		
+		if(cat.indexOf("Reisbureaus")>-1)
+			return "images/travel_agency.png";
+		
+		if(cat.indexOf("Muziekinstrumenten")>-1)
+			return "images/music_classical.png";
+			
 		return "images/star.png";
 	}
       function handleLocationError(browserHasGeolocation, infoWindow, pos) {

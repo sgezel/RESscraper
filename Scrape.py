@@ -22,39 +22,47 @@ shoplist = []
 
 def getpage(url):
     try:
-        request = http.request("GET",url)
-        return request.data
+        request = http.request("GET", url)
+        encoding = request.encoding if 'charset' in request.headers.get('content-type', '').lower() else None
+        return {"data": request.data, "encoding": encoding}
     except urllib3.exceptions.HTTPError:
         print("error")
-    return ""
+    return {}
 
 def getshops(soup):
 
+    shoplist = []
     for shop in soup.find_all("td", {"valign":"top", "width":"30%"}):
         details = [x.strip() for x in str(shop.a.contents).split('<br>')]
         shop_name = details[0]
-        shop_name = shop_name[details[0].index("\\r\\n\\r\\n\\t\\t\\t\\t\\t\\t\\t") + len("\\r\\n\\r\\n\\t\\t\\t\\t\\t\\t\\t"):-2]
+        shop_name = shop_name[details[0].index("\\r\\n\\r\\n\\t\\t\\t\\t\\t\\t\\t") + len("\\r\\n\\r\\n\\t\\t\\t\\t\\t\\t\\t"):-2].encode('utf-8').strip()
 
         province = details[3][:details[3].index("<br/>")]
 
-        shoplist.append({"name": shop_name, "streetnr": details[1], "zipcodecomm": details[2], "province": province})
+        shoplist.append({"name": shop_name.encode('utf-8').strip(), "streetnr": details[1].encode('utf-8').strip(), "zipcodecomm": details[2].encode('utf-8').strip(), "province": province.encode('utf-8').strip()})
 
     index = 0
     for desc in soup.find_all("td", {"valign":"top", "class":"normal", "colspan":"5"}):
         obj = shoplist[index]
         resp = re.findall(r'\d+', desc.contents[0])
         if len(resp) > 0:
-            obj["resp"] = re.findall(r'\d+', desc.contents[0])[0]
+            obj["resp"] = re.findall(r'\d+', desc.contents[0])[0].encode('utf-8').strip()
         else:
             obj["resp"] = ""
-            
-        obj["category"] = desc.b.text.split("|")
+
+        if desc.b != None:
+            obj["category"]=[]
+            cat_list = desc.b.text.encode('utf-8').strip().split("|")
+            for cat in cat_list:
+                obj["category"].append(cat.strip())
+        else:
+            obj["category"] = ""
 
 
 
-        if db.shops.find({"name": obj["name"]}).count() == 0:
+        if db.shops.find({"name": obj["name"], "streetnr": obj["streetnr"], "zipcodecomm": obj["zipcodecomm"]}).count() == 0:
 
-            # location = geolocator.geocode(obj['streetnr'] + ", " + obj["zipcodecomm"] + ", " + obj["province"])
+            location = geolocator.geocode(obj['streetnr'] + ", " + obj["zipcodecomm"])
 
             if location == None:
                 lat = ""
@@ -68,15 +76,15 @@ def getshops(soup):
 
             result = db.shops.insert(obj)
             print(result)
-        else:
-            print("Shop already in database" + str(db.shops.find({"name": obj["name"]}).count()) + " " + obj["name"])
+        # else:
+        #     print("Shop already in database " + obj["name"])
 
         index = index + 1
 
 
 def main():
     getShops()
-    dumpJSON()
+
 
     # updateLatLong()
 
@@ -84,29 +92,45 @@ def main():
     # listcat()
     # updateDesc()
 
+    dumpJSON()
+
+def getSoup(url):
+    page = getpage(url)
+    soup = BeautifulSoup(page["data"]
+                          , 'html.parser',from_encoding=page["encoding"])
+
+    return soup
+
 def getShops():
     steden = ["leuven"]
-    radius = "5"
+    landen = [".OTHER+COUNTRIES", ".NEDERLAND", ".GD+LUXEMBOURG", ".FRANCE", ".ESPANA+-+VALENCIA", ".ESPANA+-+CATALUNYA", ".ESPANA+-+CANAIRES", ".ESPANA+-+ANDALUSIA"]
+    radius = "100"
 
     for stad in steden:
-         soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
-                          , 'html.parser')
-         getshops(soup)
+        url = "http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients"
+        getshops(getSoup(url))
+
+    for land in landen:
+        url = "http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=&radius=" + radius + "&ps_guide=&province=" + land + "&pagelanguage=1&pid=..%2Fnbs%2Fclients"
+        print(url)
+        getshops(getSoup(url))
 
 def dumpJSON():
     with open('data.json', 'w') as outfile:
         outfile.write("data = " + dumps(db.shops.find({"lat": {"$exists" : True, "$ne" : ""} })))
 
 def updateLatLong():
-    cursor = db.shops.find({"name":{'$regex':'^Z'}})
+    cursor = db.shops.find({"lat":""})
     for shop in cursor:
         print("updating  " + shop["name"])
-        location = geolocator.geocode(shop["steetnr"] + ", " + shop["zipcodecomm"] + ", " + shop["province"])
-        print("old: " + str(shop["lat"]) + ", " + str(shop["long"]))
-        print("new: " + str(location.latitude) + ", " + str(location.longitude))
+        location = geolocator.geocode(shop["streetnr"].encode('utf-8').strip() + ", " + shop["zipcodecomm"].encode('utf-8').strip())
+
         if location != None:
-            if location.longitude != shop["long"] and location.latitude != shop["lat"]:
-                db.shops.update_one({'_id':shop["_id"]}, {'$set':{"lat": location.latitude, "long":location.longitude}}, upsert=False)
+            print("old: " + str(shop["lat"]) + ", " + str(shop["long"]))
+            print("new: " + str(location.latitude) + ", " + str(location.longitude))
+            if location != None:
+                if location.longitude != shop["long"] and location.latitude != shop["lat"]:
+                    db.shops.update_one({'_id':shop["_id"]}, {'$set':{"lat": location.latitude, "long":location.longitude}}, upsert=False)
 
 def cleanup():
     cursor = db.shops.find()
@@ -116,43 +140,50 @@ def cleanup():
             cleaned_cat.append(cat.strip())
 
         #print(cleaned_cat)
-        db.shops.update_one({'_id':shop["_id"]}, {'$set':{"category": cleaned_cat}}, upsert=False)
+        db.shops.update_one({'_id':shop["_id"]}, {'$set':{"category": cleaned_cat, "streetnr": shop["streetnr"].encode("utf8","ignore"),"zipcodecomm": shop["zipcodecomm"].encode("utf8","ignore"),"province": shop["province"].encode("utf8","ignore")}}, upsert=False)
 
 def updateDesc():
     steden = ["leuven"]
+    landen = [".OTHER+COUNTRIES", ".NEDERLAND", ".GD+LUXEMBOURG", ".FRANCE", ".ESPANA+-+VALENCIA", ".ESPANA+-+CATALUNYA", ".ESPANA+-+CANAIRES", ".ESPANA+-+ANDALUSIA"]
     radius = "100"
 
-    for stad in steden:
-        soup = BeautifulSoup(getpage(
-            "http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
-                             , 'html.parser')
+    for land in landen:
+        soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=&radius=" + radius + "&ps_guide=&province=" + land + "&pagelanguage=1&pid=..%2Fnbs%2Fclients")
+                          , 'html.parser')
 
-    for shop in soup.find_all("td", {"valign": "top", "width": "30%"}):
-        details = [x.strip() for x in str(shop.a.contents).split('<br>')]
-        shop_name = details[0]
-        shop_name = shop_name[
-                    details[0].index("\\r\\n\\r\\n\\t\\t\\t\\t\\t\\t\\t") + len("\\r\\n\\r\\n\\t\\t\\t\\t\\t\\t\\t"):-2]
+    # for stad in steden:
+    #     soup = BeautifulSoup(getpage(
+    #         "http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
+    #                          , 'html.parser')
+        shoplist = []
+        for shop in soup.find_all("td", {"valign": "top", "width": "30%"}):
+            details = [x.strip() for x in str(shop.a.contents).split('<br>')]
+            shop_name = details[0]
+            shop_name = shop_name[details[0].index("\\r\\n\\r\\n\\t\\t\\t\\t\\t\\t\\t") + len("\\r\\n\\r\\n\\t\\t\\t\\t\\t\\t\\t"):-2]
 
-        province = details[3][:details[3].index("<br/>")]
+            province = details[3][:details[3].index("<br/>")]
+            shoplist.append({"name": shop_name, "streetnr": details[1], "zipcodecomm": details[2], "province": province})
 
-        shoplist.append({"name": shop_name, "streetnr": details[1], "zipcodecomm": details[2], "province": province})
+        index = 0
+        for desc in soup.find_all("td", {"valign": "top", "class": "normal", "colspan": "5"}):
+            obj = shoplist[index]
 
-    index = 0
-    for desc in soup.find_all("td", {"valign": "top", "class": "normal", "colspan": "5"}):
-        obj = shoplist[index]
-        resp = re.findall(r'\d+', desc.contents[0])
-        if len(resp) > 0:
-            obj["resp"] = re.findall(r'\d+', desc.contents[0])[0]
-        else:
-            obj["resp"] = ""
+            print(shoplist[index])
 
-        obj["category"] = desc.b.text.split("|")
+            resp = re.findall(r'\d+', desc.contents[0])
+            if len(resp) > 0:
+                obj["resp"] = re.findall(r'\d+', desc.contents[0])[0]
+            else:
+                obj["resp"] = ""
 
-        cursor = db.shops.find({"name": obj["name"]})
-        for shop in cursor:
-            db.shops.update_one({'_id': shop["_id"]}, {'$set': {"description": desc.contents[2][3:]}})
-            print(desc.contents[2][3:])
-        index = index + 1
+            obj["category"] = desc.b.text.split("|")
+            print(desc.contents[2])
+
+            cursor = db.shops.find({"name": obj["name"], "streetnr": obj["streetnr"], "zipcodecomm": obj["zipcodecomm"]})
+            for shop in cursor:
+                db.shops.update_one({'_id': shop["_id"]}, {'$set': {"description": desc.contents[2][3:], "category":desc.b.text.split("|")}})
+                # print(desc.contents[2][3:])
+            index = index + 1
 
 def listcat():
     cursor = db.shops.find()
