@@ -58,10 +58,11 @@ def getshops(soup):
         else:
             obj["category"] = ""
 
-
+        obj["description"] = desc.contents[2][3:]
 
         if db.shops.find({"name": obj["name"], "streetnr": obj["streetnr"], "zipcodecomm": obj["zipcodecomm"]}).count() == 0:
 
+            print("new shop: " + obj["name"] + "    address: " + obj["streetnr"] + ", " + obj["zipcodecomm"])
             location = geolocator.geocode(obj['streetnr'] + ", " + obj["zipcodecomm"])
 
             if location == None:
@@ -83,14 +84,14 @@ def getshops(soup):
 
 
 def main():
-    getShops()
+    # getShops()
 
 
     # updateLatLong()
 
     # cleanup()
     # listcat()
-    # updateDesc()
+    updateDesc()
 
     dumpJSON()
 
@@ -107,16 +108,17 @@ def getShops():
     radius = "100"
 
     for stad in steden:
+        print("getting shop around " + stad +  " (" + radius + "km)")
         url = "http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients"
         getshops(getSoup(url))
 
     for land in landen:
         url = "http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=&radius=" + radius + "&ps_guide=&province=" + land + "&pagelanguage=1&pid=..%2Fnbs%2Fclients"
-        print(url)
+        print("getting shops in " + land)
         getshops(getSoup(url))
 
 def dumpJSON():
-    with open('data.json', 'w') as outfile:
+    with open(config.get('output', 'location') + 'data.json', 'w') as outfile:
         outfile.write("data = " + dumps(db.shops.find({"lat": {"$exists" : True, "$ne" : ""} })))
 
 def updateLatLong():
@@ -147,14 +149,13 @@ def updateDesc():
     landen = [".OTHER+COUNTRIES", ".NEDERLAND", ".GD+LUXEMBOURG", ".FRANCE", ".ESPANA+-+VALENCIA", ".ESPANA+-+CATALUNYA", ".ESPANA+-+CANAIRES", ".ESPANA+-+ANDALUSIA"]
     radius = "100"
 
-    for land in landen:
-        soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=&radius=" + radius + "&ps_guide=&province=" + land + "&pagelanguage=1&pid=..%2Fnbs%2Fclients")
-                          , 'html.parser')
+    # for land in landen:
+    #     soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=&radius=" + radius + "&ps_guide=&province=" + land + "&pagelanguage=1&pid=..%2Fnbs%2Fclients")
+    #                       , 'html.parser')
 
-    # for stad in steden:
-    #     soup = BeautifulSoup(getpage(
-    #         "http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
-    #                          , 'html.parser')
+    for stad in steden:
+        soup = getSoup("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
+
         shoplist = []
         for shop in soup.find_all("td", {"valign": "top", "width": "30%"}):
             details = [x.strip() for x in str(shop.a.contents).split('<br>')]
