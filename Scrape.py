@@ -10,7 +10,7 @@ import operator
 
 http = urllib3.PoolManager()
 config = SafeConfigParser()
-config.read('config.ini')
+config.read('/root/RESscraper/config.ini')
 geolocator = GoogleV3(config.get('main', 'googleapi'))
 
 client = MongoClient()
@@ -84,14 +84,14 @@ def getshops(soup):
 
 
 def main():
-    # getShops()
+    getShops()
 
 
     # updateLatLong()
 
     # cleanup()
     # listcat()
-    updateDesc()
+    # updateDesc()
 
     dumpJSON()
 
@@ -103,9 +103,9 @@ def getSoup(url):
     return soup
 
 def getShops():
-    steden = ["leuven"]
+    steden = ["leuven", "brugge", "hasselt", "antwerpen", "namen", "gent", "charleroi", "Huy"]
     landen = [".OTHER+COUNTRIES", ".NEDERLAND", ".GD+LUXEMBOURG", ".FRANCE", ".ESPANA+-+VALENCIA", ".ESPANA+-+CATALUNYA", ".ESPANA+-+CANAIRES", ".ESPANA+-+ANDALUSIA"]
-    radius = "100"
+    radius = "75"
 
     for stad in steden:
         print("getting shop around " + stad +  " (" + radius + "km)")
@@ -149,13 +149,14 @@ def updateDesc():
     landen = [".OTHER+COUNTRIES", ".NEDERLAND", ".GD+LUXEMBOURG", ".FRANCE", ".ESPANA+-+VALENCIA", ".ESPANA+-+CATALUNYA", ".ESPANA+-+CANAIRES", ".ESPANA+-+ANDALUSIA"]
     radius = "100"
 
-    # for land in landen:
-    #     soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=&radius=" + radius + "&ps_guide=&province=" + land + "&pagelanguage=1&pid=..%2Fnbs%2Fclients")
-    #                       , 'html.parser')
+    for land in landen:
+        soup = BeautifulSoup(getpage("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=&radius=" + radius + "&ps_guide=&province=" + land + "&pagelanguage=1&pid=..%2Fnbs%2Fclients")
+                          , 'html.parser')
 
-    for stad in steden:
-        soup = getSoup("http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
-
+    # for stad in steden:
+    #     soup = BeautifulSoup(getpage(
+    #         "http://www.resplus.be/nl/index.asp?name=&keyword=&contact=&city=" + stad + "&radius=" + radius + "&ps_guide=&province=&pagelanguage=1&pid=..%2Fnbs%2Fclients")
+    #                          , 'html.parser')
         shoplist = []
         for shop in soup.find_all("td", {"valign": "top", "width": "30%"}):
             details = [x.strip() for x in str(shop.a.contents).split('<br>')]
