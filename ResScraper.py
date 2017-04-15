@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 class ResScraper:
     config = SafeConfigParser()
     config.read('config.ini')
-    client = MongoClient("mongodb://res:res@ds044979.mlab.com:44979/res")
+    client = MongoClient("mongodb://")
     db = client.res
 
     def scrape(self):
